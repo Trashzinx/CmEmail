@@ -4,7 +4,7 @@
 <hr>
 <h2> Descrição: </h2>
 
-<p>Script feito para Automatizar o envio de emails via terminal.</p>
+<p>Script feito para Automatizar o envio de emails utilizando o mutt</p>
 
 <h2> Instalação: </h2>
 
