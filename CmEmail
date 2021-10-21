@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+
+# TPUT :-:
+
+BLACK=$(tput setaf 0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+MAGENTA=$(tput setaf 5)
+CYAN=$(tput setaf 6)
+WHITE=$(tput setaf 7)
+BOLD=$(tput bold)
+REDBG=$(tput setab 1)
+SUBRI=$(tput smul)
+RESET=$(tput sgr0)
+
+#######################
+
+trap stop 2
+
+stop()
+{
+        echo -e "\n\n${RED}${BOLD}Script encerrado pelo Usuario...${RESET}\n"
+        exit 1
+}
+
+check()
+{
+        # Verificando se o mutt está instalado...
+        if [[ `command -v mutt` ]]; then
+                echo ""
+        else
+                apt-get install mutt -y
+                pip install lolcat
+                echo "set alias_file=\"~/.muttrc\"" >> $PREFIX/etc/Muttrc
+        fi
+
+        # Verificando se o arquivo .muttrc existe
+        if [[ -e ~/.muttrc ]]; then
+                menu
+        else
+                login
+        fi
+}
+
+menu()
+{
+        myemail=$(cat ~/.muttrc | tr -d '"' | grep -s "set imap_user" | awk '{print $4}')
+        banner
+        echo -e "${RED}[${RESET}1${RED}]${RESET}${BOLD} - Enviar email${RESET}\n"
+        echo -e "${RED}[${RESET}2${RED}]${RESET}${BOLD} - Enviar Email com arquivo em anexo${RESET}\n"
+        echo -e "${RED}[${RESET}3${RED}]${RESET}${BOLD} - SpamEmail${RESET}\n"
+        echo -e "${RED}[${RESET}4${RED}]${RESET}${BOLD} - Enviar Emails Para Uma Lista de Pessoas${RESET}"
+        echo -e "${WHITE}────────────────────────────────────────────────${RESET}"
+        echo -ne "${BOLD}[$OSTYPE]> "
+        read opcao
+
+        if [[ "$opcao" == "1" || "$opcao" == "01" ]]; then
+                opcao1
+
+        elif [[ "$opcao" == "2" || "$opcao" == "02" ]]; then
+                opcao2
+
+        elif [[ "$opcao" == "3" || "$opcao" == "03" ]]; then
+                opcao3
+
+        elif [[ "$opcao" == "4" || "$opcao" == "04" ]]; then
+                opcao4
+
+        else
+                echo -e "\n\n${RED}Opção Invalida.\n"
+        fi
+}
+
+opcao1()
+{
+        banner
+        echo -ne "${BOLD}Digite o destinatário: ${RESET}"${CYAN}
+        read  -r destinatario
+        echo -ne "\n${RESET}${BOLD}Digite o Assunto do email: ${RESET}"${CYAN}
+        read -r assunto
+        echo -ne "\n${RESET}${BOLD}Digite o conteúdo do email: ${RESET}"${CYAN}
+        read -r texto
+        echo
+        echo "$texto" | mutt -s "$assunto" $destinatario &> /dev/null
+        send
+}
+
+send()
+{
+        clear
+        echo -e "${RESET}${BOLD}DE: ${RESET}${SUBRI}$myemail${RESET}\n"
+        echo -e "${BOLD}PARA: ${RESET}${SUBRI}$destinatario${RESET}\n"
+        echo -e "${BOLD}Assunto do Email: ${RESET}${WHITE}$assunto${RESET}\n"
+        echo -e "${BOLD}Conteúdo Do Email: ${RESET}${WHITE}$texto${RESET}\n"
+        if [[ "$arquivo" == "" ]]; then
+                echo -e "${BOLD}Arquivo Em Anexo: ${RESET}${WHITE}Nenhum Arquivo Anexado${RESET}\n"
+        else
+                echo -e "${BOLD}Arquivo em Anexo: ${RESET}${WHITE}$arquivo${RESET}\n"
+        fi
+        echo -e "${GREEN}ENVIADO COM SUCESSO${RESET}\n"
+}
+
+opcao2()
+{
+        banner
+        echo -ne "${BOLD}Digite o Destinatário: ${RESET}"${RED}
+        read -r destinatario
+        echo -ne "\n${RESET}${BOLD}Digite o Assunto do Email: ${RESET}"${RED}
+        read -r assunto
+        echo -ne "\n${RESET}${BOLD}Digite o conteúdo do email: ${RESET}"${RED}
+        read -r texto
+        echo -ne "\n${RESET}${BOLD}Digite o nome ou o caminho do arquivo: ${RESET}"${RED}
+        read -r arquivo
+
+        echo "$texto" | mutt -s "$assunto" $destinatario -a "$arquivo" &> /dev/null
+        send
+}
+
+opcao3()
+{
+        banner
+        echo -ne "${BOLD}Digite o destinatário: ${RESET}"${CYAN}
+                read  -r destinatario
+        echo -ne "\n${RESET}${BOLD}Digite  o Conteúdo que deseja flodar: ${RESET}"${CYAN}
+                read assunto
+        echo -ne "\n${RESET}${BOLD}Digite o tanto de emails que deseja enviar: ${RESET}"${CYAN}
+        read -r vzs
+        clear
+        for i in $(seq 1 $vzs); do
+                sleep 0.3
+                echo "By: 𝙳4𝚁𝚔𝙲𝚢𝙵𝚛4" | mutt -s "$assunto" $destinatario &> /dev/null
+                echo -e "\n${RESET}${SUBRI}${BOLD}Emails enviados $i${RESET}"
+        done
+}
+
+opcao4()
+{
+        banner
+        echo -ne "${BOLD}Digite o Caminho do Arquivo: ${RESET}"${CYAN}
+        read  -r destinatarios
+        echo -ne "\n${RESET}${BOLD}Digite o Assunto do email: ${RESET}"${CYAN}
+        read -r assunto
+        echo -ne "\n${RESET}${BOLD}Digite o conteúdo do email: ${RESET}"${CYAN}
+        read -r texto
+        clear
+        if [[ -e "$destinatarios" ]]; then
+        for destinatario in `cat $destinatarios`; do
+                echo "$texto" | mutt -s "$assunto" $destinatario &> /dev/null
+                echo -e "${RESET}${BOLD}Email enviado com sucesso para: ${SUBRI}$destinatario${RESET}\n"
+        done
+        else
+                for destinatario in `cat emails.txt`; do
+                echo "$texto" | mutt -s "$assunto" $destinatario &> /dev/null
+                echo -e "${RESET}${BOLD}Email enviado com sucesso para: ${SUBRI}$destinatario${RESET}\n"
+        done
+        fi
+}
+login()
+{
+        banner
+        echo -ne "${WHITE}Digite seu nome: "${GREEN}
+        read -r nome
+        echo -ne "\n${WHITE}Digite o seu Email: "${GREEN}
+        read -r email
+        echo -ne "\n${RESET}${WHITE}Senha do Email: ${RESET}"
+        read -s senha
+        echo -e "\n\n${BOLD}Pra você conseguir enviar e-mails, você precisa autorizar o uso de aplicativos menos seguros no Gmail acesse ${SUBRI}${GREEN}https://myaccount.google.com/lesssecureapps${RESET}, ${BOLD}ative a permissão e Execute o Script novamente...\n${RESET}"
+        configmutt
+}
+
+banner()
+{
+        clear
+        echo -e ":'######::'##::::'##:'########:'##::::'##::::'###::::'####:'##:::::::
+'##... ##: ###::'###: ##.....:: ###::'###:::'## ##:::. ##:: ##:::::::
+ ##:::..:: ####'####: ##::::::: ####'####::'##:. ##::: ##:: ##:::::::
+ ##::::::: ## ### ##: ######::: ## ### ##:'##:::. ##:: ##:: ##:::::::
+ ##::::::: ##. #: ##: ##...:::: ##. #: ##: #########:: ##:: ##:::::::
+ ##::: ##: ##:.:: ##: ##::::::: ##:.:: ##: ##.... ##:: ##:: ##:::::::
+. ######:: ##:::: ##: ########: ##:::: ##: ##:::: ##:'####: ########:
+:......:::..:::::..::........::..:::::..::..:::::..::....::........::
+─────────────────────────────────────────────────────────────────────\n"|lolcat
+}
+
+configmutt()
+{
+        echo "set from = \"$email\"" > ~/.muttrc
+        echo "set realname = \"$nome\"" >> ~/.muttrc
+        echo -e "\n" >> ~/.muttrc
+        echo "set imap_user = \"$email\"" >> ~/.muttrc
+        echo "set imap_pass = \"$senha\"" >> ~/.muttrc
+        echo -e "\n" >> ~/.muttrc
+        echo "set smtp_url = \"smtps://$email:$senha@smtp.gmail.com:465/\"" >> ~/.muttrc
+        echo -e "\n" >> ~/.muttrc
+        echo "set folder = \"imaps://imap.gmail.com/\"" >> ~/.muttrc
+        echo -e "\n" >> ~/.muttrc
+        echo "set sort = threads" >> ~/.muttrc
+        echo "set sort_aux = reverse-date" >> ~/.muttrc
+        echo "set spoolfile = \"+INBOX\"" >> ~/.muttrc
+        echo "set postponed = \"+[Gmail]/Drafts\"" >> ~/.muttrc
+        echo "set trash = \"+[Gmail]/Trash\"" >> ~/.muttrc
+}
+check
